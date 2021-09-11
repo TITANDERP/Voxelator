@@ -3,7 +3,10 @@ The all new way to turn your boring vector meshes into the new fad in town; Voxe
 
 Notes:
 I have not tested this on a rotated mesh. With further testing I may improve on this.
+
 It is necessary for a uniform scale on the mesh that is to be voxelated. In otherwords make sure your x scale, y scale, and z scale are all the same. (dimensions may be non-uniform)
+
+I do suggest setting your image scaling to "closest" under your mesh's material settings to fully cover each face in a single color.
 
 Installation:
 To install simply go to the top tool bar in blender under edit> preferences > addons > install, then choose voxelator.py
