@@ -1,6 +1,6 @@
 bl_info = {
     "name": "Voxelator",
-    "author": "15shekels aka derpy.radio aka Ivan",
+    "author": "15shekels aka derpy.radio aka TITANDERP aka Ivan",
     "version": (1, 1),
     "blender": (2, 92, 0),
     "location": "View3D > Object",
