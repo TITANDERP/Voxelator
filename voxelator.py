@@ -81,12 +81,7 @@ class OBJECT_OT_voxelize(Operator):
         bpy.context.object.name = "voxel_cube"
 
         #decide cube size based on resolution and size of original mesh
-        largest_dimension_arr = []
-        largest_dimension_arr.append(target.dimensions.x)
-        largest_dimension_arr.append(target.dimensions.y)
-        largest_dimension_arr.append(target.dimensions.z)
-        largest_dimension = max(largest_dimension_arr)
-        cube_size = largest_dimension/(self.voxelizeResolution*2)
+        cube_size = max(target.dimensions) / (self.voxelizeResolution*2)
 
         #apply cube particles to duplicated mesh to create voxels
         target.modifiers.new(name='voxel system',type='PARTICLE_SYSTEM')
@@ -142,12 +137,7 @@ class OBJECT_OT_voxelize(Operator):
         bpy.ops.object.modifier_apply(modifier="DataTransfer")
 
         #make sure each cube is exactly scaled to 1m
-        largest_dimension_arr = []
-        largest_dimension_arr.append(bpy.context.object.dimensions.x)
-        largest_dimension_arr.append(bpy.context.object.dimensions.y)
-        largest_dimension_arr.append(bpy.context.object.dimensions.z)
-        largest_dimension = max(largest_dimension_arr)
-        resize_value = 1/(largest_dimension/self.voxelizeResolution)
+        resize_value = 1 / (max(bpy.context.object.dimensions) / self.voxelizeResolution)
         bpy.ops.transform.resize(value=(resize_value, resize_value, resize_value))
 
         #copy material from source object to cube mesh
