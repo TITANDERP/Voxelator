@@ -1,7 +1,7 @@
 bl_info = {
     "name": "Voxelator",
     "author": "15shekels aka derpy.radio aka TITANDERP aka Ivan",
-    "version": (1, 1),
+    "version": (1, 2),
     "blender": (2, 92, 0),
     "location": "View3D > Object",
     "description": "Converts any mesh into a voxelized mesh made up by cubes",
@@ -12,11 +12,15 @@ bl_info = {
 
 
 import bpy
+from bpy.props import (
+    IntProperty,
+    BoolProperty
+)
 from bpy.types import (
     AddonPreferences,
     Operator,
     Panel,
-    PropertyGroup,
+    PropertyGroup
 )
 
 class OBJECT_OT_voxelize(Operator):
@@ -35,12 +39,12 @@ class OBJECT_OT_voxelize(Operator):
         description = "Maximum amount of cubes used per axis of mesh. *warning*: amounts higher than 32 can result in long load times during voxelization.",
     )
     
-    fill_volume = bpy.props.BoolProperty(
+    fill_volume: bpy.props.BoolProperty(
         name="Fill Volume",
         description="Fill the inside of the voxelized mesh with cubes as well.",
         default = False
     )
-    separate_cubes = bpy.props.BoolProperty(
+    separate_cubes: bpy.props.BoolProperty(
         name="Separate Cubes",
         description="Keep cubes as separate meshes inside the same object.",
         default = False
@@ -54,13 +58,14 @@ class OBJECT_OT_voxelize(Operator):
         return context.window_manager.invoke_props_dialog(self)
     
     def execute(self, context):
+
         #set selected object as source
-        sourceName = bpy.context.object.name
-        source = bpy.data.objects[sourceName]
+        source_name = bpy.context.object.name
+        source = bpy.data.objects[source_name]
 
         #create copy of object to perform 
         bpy.ops.object.duplicate_move(OBJECT_OT_duplicate={"linked":False, "mode":'TRANSLATION'})
-        bpy.context.object.name = sourceName + "_voxelized"
+        bpy.context.object.name = source_name + "_voxelized"
         bpy.ops.object.convert(target='MESH')
         bpy.ops.object.transform_apply(location=False, rotation=True, scale=False)
 
@@ -68,19 +73,12 @@ class OBJECT_OT_voxelize(Operator):
         source.hide_set(True)
 
         #rename the duplicated mesh
-        targetName = bpy.context.object.name
-        target = bpy.data.objects[targetName]
+        target_name = bpy.context.object.name
+        target = bpy.data.objects[target_name]
 
         #create cube to be used for voxels
         bpy.ops.mesh.primitive_cube_add()
         bpy.context.object.name = "voxel_cube"
-
-        #deselect everythings
-        for ob in bpy.context.selected_objects:
-            ob.select = False
-
-        #set duplicated mesh as active again
-        bpy.data.objects[targetName].select_set(True)
 
         #decide cube size based on resolution and size of original mesh
         largest_dimension_arr = []
@@ -109,26 +107,24 @@ class OBJECT_OT_voxelize(Operator):
         target_ps_settings.use_dead = True
         target_ps_settings.particle_size = cube_size
 
+        bpy.context.scene.objects["voxel_cube"].select_set(False)
+        bpy.context.scene.objects[target_name].select_set(True)
+
         #create cubes from the particles
         bpy.ops.object.duplicates_make_real()
 
         #remove the duplicated mesh, leaving behind the voxelized mesh
-        bpy.data.objects.remove(bpy.data.objects[targetName], do_unlink=True)
+        bpy.data.objects.remove(bpy.data.objects[target_name], do_unlink=True)
         #delete the original cube particle
         bpy.data.objects.remove(bpy.data.objects["voxel_cube"], do_unlink=True)
-
-        #deselect everything
-        for ob in bpy.context.selected_objects:
-            ob.select = False
-
-        #select every visible cube from the particle mesh
-        bpy.ops.object.select_pattern(pattern="*voxel_cube*")
 
         #make one of the cubes selected active
         bpy.context.view_layer.objects.active = bpy.context.selected_objects[0]
 
         #join the cubes into a single mesh
         bpy.ops.object.join()
+
+        bpy.context.object.name = source_name + "_voxel_mesh"
 
         #transfer the uv map from the source object to the new cube mesh
         bpy.ops.object.modifier_add(type='DATA_TRANSFER')
@@ -140,12 +136,12 @@ class OBJECT_OT_voxelize(Operator):
         bpy.ops.object.modifier_apply(modifier="DataTransfer")
 
         #make sure each cube is exactly scaled to 1m
-        biggest_dimension_arr = []
-        biggest_dimension_arr.append(bpy.context.object.dimensions.x)
-        biggest_dimension_arr.append(bpy.context.object.dimensions.y)
-        biggest_dimension_arr.append(bpy.context.object.dimensions.z)
-        biggest_dimension = max(biggest_dimension_arr)
-        resize_value = 1/(biggest_dimension/self.voxelizeResolution)
+        largest_dimension_arr = []
+        largest_dimension_arr.append(bpy.context.object.dimensions.x)
+        largest_dimension_arr.append(bpy.context.object.dimensions.y)
+        largest_dimension_arr.append(bpy.context.object.dimensions.z)
+        largest_dimension = max(largest_dimension_arr)
+        resize_value = 1/(largest_dimension/self.voxelizeResolution)
         bpy.ops.transform.resize(value=(resize_value, resize_value, resize_value))
 
         #copy material from source object to cube mesh
@@ -165,7 +161,7 @@ class OBJECT_OT_voxelize(Operator):
 
         count = 0
         while count < 100:
-            bpy.ops.mesh.select_random(percent=count + 1, seed=count)
+            bpy.ops.mesh.select_random(ratio=count*.01 + .01, seed=count)
             bpy.ops.uv.select_all(action='SELECT')
             bpy.ops.transform.resize(value=(0.00001, 0.00001, 0.00001))
             bpy.ops.mesh.hide(unselected=False)
@@ -184,8 +180,7 @@ class OBJECT_OT_voxelize(Operator):
         bpy.context.object.location[0] = 0
         bpy.context.object.location[1] = 0
         bpy.context.object.location[2] = 0
-        bpy.context.object.name = sourceName + "_voxel_mesh"
-        
+
         return {'FINISHED'}
 
 def menu_func(self, context):
