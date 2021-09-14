@@ -1,8 +1,8 @@
 bl_info = {
     "name": "Voxelator",
     "author": "15shekels aka derpy.radio aka TITANDERP aka Ivan",
-    "version": (1, 2),
-    "blender": (2, 92, 0),
+    "version": (1, 2, 1),
+    "blender": (2, 93, 4),
     "location": "View3D > Object",
     "description": "Converts any mesh into a voxelized mesh made up by cubes",
     "warning": "",
@@ -125,7 +125,13 @@ class OBJECT_OT_voxelize(Operator):
         bpy.ops.object.join()
 
         bpy.context.object.name = source_name + "_voxel_mesh"
-
+        
+        #join cubes together by vertice
+        bpy.ops.object.editmode_toggle()
+        if self.separate_cubes == False:
+            bpy.ops.mesh.remove_doubles()
+        bpy.ops.object.editmode_toggle()
+        
         #transfer the uv map from the source object to the new cube mesh
         bpy.ops.object.modifier_add(type='DATA_TRANSFER')
         bpy.context.object.modifiers["DataTransfer"].use_loop_data = True
@@ -149,8 +155,6 @@ class OBJECT_OT_voxelize(Operator):
 
         #shrink uvs so each face is filled with one color
         bpy.ops.object.editmode_toggle()
-        if self.separate_cubes == False:
-            bpy.ops.mesh.remove_doubles()
         bpy.ops.mesh.select_mode(type='FACE')
         bpy.context.area.ui_type = 'UV'
         bpy.context.scene.tool_settings.use_uv_select_sync = False
