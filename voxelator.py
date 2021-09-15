@@ -170,7 +170,7 @@ class OBJECT_OT_voxelize(Operator):
         bpy.ops.object.editmode_toggle()
 
         #make sure new model is centered
-        bpy.ops.object.origin_set(type='ORIGIN_GEOMETRY', center='MEDIAN')
+        bpy.ops.object.origin_set(type='ORIGIN_GEOMETRY', center='BOUNDS')
         bpy.context.object.location[0] = 0
         bpy.context.object.location[1] = 0
         bpy.context.object.location[2] = 0
